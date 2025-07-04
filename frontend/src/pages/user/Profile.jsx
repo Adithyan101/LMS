@@ -9,10 +9,59 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import Course from "./Course";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  useLoadUserQuery,
+  useUpdateUserMutation,
+} from "../../app/api/authApi";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+
 
 const Profile = () => {
-  const isLoading = false;
   const enrolledCourses = [1, 2, 3]; // Replace with dynamic data if needed
+
+
+  const { data: user, isLoading: loading } = useLoadUserQuery();
+  const [updateUser, { isLoading: loadingUpdateUser }] = useUpdateUserMutation();
+
+  const [name, setName] = useState("");
+  const [profilePhoto, setProfilePhoto] = useState(null);
+  const [previewImage, setPreviewImage] = useState("");
+
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    if (user) {
+      setName(user.name || "");
+      setPreviewImage(user.profilePhoto || "https://github.com/shadcn.png");
+    }
+  }, [user]);
+
+  const onChangeHandler = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProfilePhoto(file);
+      setPreviewImage(URL.createObjectURL(file));
+    }
+  };
+
+  const updateUserHandler = async () => {
+    const formData = new FormData();
+    formData.append("name", name);
+    if (profilePhoto) {
+      formData.append("profilePhoto", profilePhoto);
+    }
+
+    try {
+      await updateUser(formData).unwrap();
+      toast.success("Profile updated successfully");
+    } catch (error) {
+      console.error("Update failed", error);
+      toast.error(error?.data?.message || "Something went wrong");
+    }
+  };
+
+  if (loading) return <ProfileSkeleton />;
 
   return (
     <div className="min-h-screen bg-zinc-900 text-white py-16 px-4">
@@ -21,19 +70,40 @@ const Profile = () => {
         <div>
           <h1 className="text-3xl font-bold text-center md:text-left mb-6">Profile</h1>
           <div className="flex flex-col md:flex-row items-center gap-8">
-            <Avatar className="h-24 w-24">
-              <AvatarImage src="https://github.com/shadcn.png" alt="User" />
-              <AvatarFallback>US</AvatarFallback>
-            </Avatar>
+            {/* Avatar */}
+            <div className="flex justify-center md:justify-start">
+              <div
+                onClick={() => fileInputRef.current.click()}
+                className="cursor-pointer relative group"
+              >
+                <Avatar className="h-24 w-24 ring ring-gray-400 ring-offset-2">
+                  <AvatarImage src={user?.photoUrl} alt="User" />
+                  <AvatarFallback>US</AvatarFallback>
+                </Avatar>
+                <div className="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-sm rounded-full transition-opacity">
+                  Edit
+                </div>
+              </div>
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept="image/*"
+                onChange={onChangeHandler}
+                className="hidden"
+              />
+            </div>
 
+            {/* Form */}
             <div className="w-full md:w-2/3 space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="name">Name</Label>
                 <Input
                   id="name"
                   type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   placeholder="John Doe"
-                  className="bg-zinc-800 text-white border-zinc-600"
+                  className="bg-zinc-800 text-gray-300 border-zinc-600"
                 />
               </div>
 
@@ -42,23 +112,33 @@ const Profile = () => {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="john@example.com"
-                  className="bg-zinc-800 text-white border-zinc-600"
+                  value={user?.email}
+                  readOnly
+                  className="bg-zinc-800 text-gray-300 border-zinc-600"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="role">Role</Label>
                 <Input
-                  id="password"
-                  type="password"
-                  placeholder="********"
-                  className="bg-zinc-800 text-white border-zinc-600"
+                  id="role"
+                  type="text"
+                  value={user?.role}
+                  readOnly
+                  className="bg-zinc-800 text-gray-300 border-zinc-600"
                 />
               </div>
 
-              <Button className="bg-gray-200 text-black hover:bg-zinc-500 transition">
-                {isLoading ? <Loader2 className="animate-spin mr-2" /> : "Update"}
+              <Button
+                onClick={updateUserHandler}
+                className="bg-gray-200 text-black hover:bg-zinc-500 transition"
+                disabled={loadingUpdateUser}
+              >
+                {loadingUpdateUser ? (
+                  <Loader2 className="animate-spin mr-2" />
+                ) : (
+                  "Update"
+                )}
               </Button>
             </div>
           </div>
@@ -71,7 +151,9 @@ const Profile = () => {
           </h2>
 
           {enrolledCourses.length === 0 ? (
-            <p className="text-white/50 text-center">You haven't enrolled in any course yet.</p>
+            <p className="text-white/50 text-center">
+              You haven't enrolled in any course yet.
+            </p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {enrolledCourses.map((course, index) => (
@@ -86,6 +168,8 @@ const Profile = () => {
 };
 
 export default Profile;
+
+
 
 
 const ProfileSkeleton = () => {

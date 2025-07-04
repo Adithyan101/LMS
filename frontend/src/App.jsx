@@ -1,13 +1,15 @@
 import Login from "./pages/Login";
-import Navbar from "./components/Navbar";
 import HeroSection from "./pages/user/HeroSection";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import MainLayout from "./layout/mainLayout";
+import MainLayout from "./layout/MainLayout";
 import CourseContainer from "./pages/user/CourseContainer";
 import MyLearning from "./pages/user/MyLearning";
 import Profile from "./pages/user/Profile";
-
-
+import Dashboard from "./pages/admin/Dashboard";
+import CourseTable from "./pages/admin/course/CourseTable";
+import AdminLayout from "./layout/AdminLayout";
+import AddCourse from "./pages/admin/course/AddCourse";
+import EditCourse from "./pages/admin/course/EditCourse";
 
 const appRouter = createBrowserRouter([
   {
@@ -16,10 +18,12 @@ const appRouter = createBrowserRouter([
     children: [
       {
         path: "/",
-        element: <>
-        <HeroSection/>
-        <CourseContainer/>
-        </>,
+        element: (
+          <>
+            <HeroSection />
+            <CourseContainer />
+          </>
+        ),
       },
       {
         path: "/login",
@@ -27,22 +31,42 @@ const appRouter = createBrowserRouter([
       },
       {
         path: "/my-learning",
-        element: <MyLearning/>
+        element: <MyLearning />,
       },
       {
         path: "/my-profile",
-        element: <Profile/>,
+        element: <Profile />,
       },
-
+    ],
+  },
+  {
+    path: "/admin",
+    element: <AdminLayout />, // ✅ Wrap all admin pages in this layout
+    children: [
+      {
+        path: "dashboard",
+        element: <Dashboard />,
+      },
+      {
+        path: "courses",
+        element: <CourseTable />,
+      },
+      {
+        path: "courses/create",
+        element: <AddCourse />,
+      },
+      {
+        path: "courses/:id",
+        element: <EditCourse/>,
+      }
     ],
   },
 ]);
 
 function App() {
   return (
-    <main >
+    <main>
       <RouterProvider router={appRouter} />
-      
     </main>
   );
 }

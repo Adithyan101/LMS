@@ -1,6 +1,6 @@
-import { AppWindowIcon, CodeIcon, Loader } from "lucide-react";
+
 import { Loader2 } from "lucide-react";
-import { toast } from "sonner"
+import { toast } from "react-hot-toast"
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,8 +14,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useEffect } from "react";
-import { useLoginUserMutation, useRegisterUserMutation } from "../app/api/authApi";
+import { useLoadUserQuery, useLoginUserMutation, useRegisterUserMutation } from "../app/api/authApi";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { userLoggedIn } from "../app/feautures/authSlice";
 
 const Login = () => {
   const [loginInput, setLoginInput] = useState({ email: "", password: "" });
@@ -24,6 +26,9 @@ const Login = () => {
     email: "",
     password: "",
   });
+
+  const {refetch} = useLoadUserQuery()
+  const dispatch = useDispatch();
 
   const [registerUser, {data:registerData, error:registerError, isLoading:registerIsLoading, isSuccess:registerIsSuccess}] = useRegisterUserMutation();
   const [loginUser, {data:loginData, error:loginError, isLoading:loginIsLoading, isSuccess:loginIsSuccess}] = useLoginUserMutation();
@@ -45,19 +50,19 @@ const Login = () => {
     const inputData = type === "signup" ? signupInput : loginInput
     const action = type === "signup" ? registerUser : loginUser;
     await action(inputData);
-    console.log(inputData)
-
   }
 
   useEffect(()=>{
    if(registerIsSuccess && registerData){
      toast.success(registerData.message)
+     refetch();
      navigate('/login')
    }
    if(registerError){
      toast.error(registerError.data.message)
    }
     if(loginIsSuccess && loginData){
+       dispatch(userLoggedIn({ user: loginData.user }));
      toast.success(loginData.message)
      navigate('/')
    }
@@ -69,7 +74,7 @@ const Login = () => {
 
   return (
     <div className="flex w-full items-center justify-center bg-zinc-900 text-white min-h-screen">
-      <Tabs className="w-100">
+      <Tabs defaultValue="login" className="w-100">
         <TabsList className="bg-zinc-800 text-white ml-30">
           <TabsTrigger
             value="signup"
