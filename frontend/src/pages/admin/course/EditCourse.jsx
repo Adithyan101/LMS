@@ -1,12 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import RichTextEditor from "../../../components/ui/RichTextEditor";
 import { toast } from "react-hot-toast";
 import { Loader2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  useEditCourseMutation,
+  useGetCourseByIdQuery,
+} from "../../../app/api/courseApi";
 
 const courseLevels = ["Beginner", "Intermediate", "Advanced"];
 const categories = ["Frontend", "Backend", "Fullstack", "DevOps"];
-const coursePrices = ["Free", "₹499", "₹999", "₹1499", "₹1999"];
 
 const EditCourse = () => {
   const [formData, setFormData] = useState({
@@ -21,8 +24,27 @@ const EditCourse = () => {
   const [previewUrl, setPreviewUrl] = useState("");
 
   const navigate = useNavigate();
+  const params = useParams();
+  const courseId = params.id;
 
-  const isLoading = false;
+  const { data: courseByIdData, isLoading: courseLoading } =
+    useGetCourseByIdQuery(courseId, {refetchOnMountOrArgChange: true});
+
+  useEffect(() => {
+    if (courseByIdData?.course) {
+      const course = courseByIdData?.course;
+      setFormData({
+        title: course.courseTitle,
+        subTitle: course.subTitle,
+        description: course.description,
+        category: course.category,
+        courseLevel: course.courseLevel,
+        coursePrice: course.coursePrice,
+        courseThumbnail: course.courseThumbnail,
+      });
+      setPreviewUrl(course.courseThumbnail);
+    }
+  }, [courseByIdData]);
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -35,11 +57,42 @@ const EditCourse = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const [editCourse, { data, isLoading, isSuccess, error }] =
+    useEditCourseMutation();
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Updated Course:", formData);
-    // handle update logic here
+
+    const formPayload = new FormData();
+    formPayload.append("title", formData.title);
+    formPayload.append("subTitle", formData.subTitle);
+    formPayload.append("description", formData.description);
+    formPayload.append("category", formData.category);
+    formPayload.append("courseLevel", formData.courseLevel);
+    formPayload.append("coursePrice", formData.coursePrice);
+    formPayload.append("courseThumbnail", formData.courseThumbnail);
+    formPayload.append("id", courseId);
+
+    await editCourse({ id: courseId, data: formPayload });
   };
+
+  useEffect(() => {
+    if (isSuccess) {
+      toast.success("Course updated successfully");
+      navigate("/admin/courses");
+    }
+    if (error) {
+      toast.error(error?.data?.message || "Something went wrong");
+    }
+  }, [isSuccess, error]);
+
+  if(courseLoading) {
+    return (
+      <div className="min-h-screen bg-zinc-900 text-white flex items-center justify-center px-4 py-10">
+        <Loader2 className="animate-spin" />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-zinc-900 text-white flex items-center justify-center px-4 py-10">

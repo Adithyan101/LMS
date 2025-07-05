@@ -43,35 +43,62 @@ export const getAllCreatorCourses = async (req, res) => {
 
 export const editCourses = async (req, res) => {
   try {
-    const { courseTitle, category, coursePrice, subTitle, courseLevel, description } = req.body;
-    console.log(req.body);
+    const { title, category, coursePrice, subTitle, courseLevel, description } =
+      req.body;
     const thumbnail = req.file;
-    if (!courseTitle || !category || !coursePrice || !subTitle || !courseLevel || !description || !courseThumbnail) {
+
+    console.log(
+      title,
+      category,
+      coursePrice,
+      subTitle,
+      courseLevel,
+      description,
+      thumbnail
+    );
+
+    // Validate body (don't validate thumbnail here)
+    if (
+      !title ||
+      !category ||
+      !coursePrice ||
+      !subTitle ||
+      !courseLevel ||
+      !description
+    ) {
       return res.status(400).json({ message: "All fields are required" });
     }
+
     const course = await Course.findById(req.params.id);
     if (!course) {
       return res.status(404).json({ message: "Course not found" });
     }
 
-    let courseThumbnail;
+    let courseThumbnail = course.courseThumbnail; // default to existing thumbnail
+
     if (thumbnail) {
-     if(course.courseThumbnail){
-      const publicId = course.courseThumbnail.split("/").pop().split(".")[0]; //extracting the public id
-      await deleteMedia(publicId);
-     }
+      // Delete existing thumbnail from cloud
+      if (course.courseThumbnail) {
+        const publicId = course.courseThumbnail.split("/").pop().split(".")[0];
+        await deleteMedia(publicId);
+      }
+
+      // Upload new thumbnail
       const cloudResponse = await uploadMedia(thumbnail.path);
-    //   courseThumbnail = cloudResponse.secure_url;
+      courseThumbnail = cloudResponse.secure_url;
     }
 
-    course.courseTitle = courseTitle;
+    // Update course fields
+    course.courseTitle = title;
     course.category = category;
     course.coursePrice = coursePrice;
     course.subTitle = subTitle;
     course.courseLevel = courseLevel;
     course.description = description;
-    course.courseThumbnail = courseThumbnail?.secure_url;
+    course.courseThumbnail = courseThumbnail;
+
     await course.save();
+
     res.status(200).json({
       course,
       message: "Course updated successfully",
@@ -82,14 +109,19 @@ export const editCourses = async (req, res) => {
   }
 };
 
-export const updateCourse = async (req, res) => {
+export const getCourseById = async (req, res) => {
   try {
-
-
-
-
+    const courseId = req.params.id;
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+    res.status(200).json({
+      course,
+      message: "Course fetched successfully",
+    });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "update course server error" });
+    res.status(500).json({ message: "getCourseById server error" });
   }
 };
