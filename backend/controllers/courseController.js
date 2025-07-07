@@ -1,4 +1,5 @@
 import Course from "../models/courseModels.js";
+import Lecture from "../models/lectureModel.js";
 import { deleteMedia, uploadMedia } from "../utils/claudinary.js";
 
 export const createCourse = async (req, res) => {
@@ -123,5 +124,58 @@ export const getCourseById = async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "getCourseById server error" });
+  }
+};
+
+
+export const createLecture = async (req, res) => {
+  try {
+    const { lectureTitle } = req.body;
+    console.log(req.body);
+    const courseId = req.params.id;
+    if (!lectureTitle || !courseId)  {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+    
+    //create lecture
+    const lecture = await Lecture.create({
+     title: lectureTitle
+    })
+
+    if(course){
+      course.lectures.push(lecture._id);
+      await course.save();
+      res.status(200).json({
+        course,
+        message: "Lecture created successfully",
+      });
+    }
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "create lecture server error" });
+  }
+};
+
+
+export const getAllLectures = async (req, res) => {
+  try {
+    const courseId = req.params.id;
+    const course = await Course.findById(courseId).populate("lectures");
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+    res.status(200).json({
+      course,
+      message: "Lectures fetched successfully",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "get all lectures server error" });
   }
 };
