@@ -18,7 +18,7 @@ const CreateLecture = () => {
   const [createLecture, { data, isLoading, error, isSuccess }] =
     useCreateLectureMutation();
 
-  const { data: lectureData, isLoading: lectureLoading } =
+  const { data: lectureData, isLoading: lectureLoading, refetch } =
     useGetAllLecturesQuery(id);
   console.log(lectureData);
 
@@ -37,6 +37,7 @@ const CreateLecture = () => {
 
   useEffect(() => {
     if (isSuccess) {
+      refetch();
       toast.success("Lecture created successfully");
       setLectureTitle("");
     }
@@ -46,12 +47,12 @@ const CreateLecture = () => {
         error?.data?.message || "Something went wrong in adding course"
       );
     }
-  }, [isSuccess, error]);
+  }, [isSuccess, error, refetch]);
 
   return (
     <>
-      <div className="min-h-screen bg-zinc-900 flex items-center justify-center px-4 py-5">
-        <div className="w-full max-w-2xl bg-zinc-900 p-6 sm:p-8 rounded-2xl border border-zinc-700 shadow-md">
+      <div className=" bg-zinc-900 flex items-center justify-center px-4 py-5">
+        <div className="w-full mb-40 max-w-2xl bg-zinc-900 p-3 sm:p-8 rounded-2xl border border-zinc-700 shadow-md">
           <h2 className="text-2xl sm:text-3xl font-semibold text-zinc-100 mb-5 text-center border-b border-zinc-700 pb-3">
             Create New Lecture
           </h2>
@@ -74,14 +75,14 @@ const CreateLecture = () => {
               <Button
                 type="button"
                 onClick={() => window.history.back()}
-                className="w-full sm:w-auto px-6 py-2 bg-zinc-700 hover:bg-zinc-600 text-white rounded-md transition duration-200"
+                className="w-full cursor-pointer sm:w-auto px-6 py-2 bg-zinc-700 hover:bg-zinc-600 text-white rounded-md transition duration-200"
               >
                 ← Back to Course
               </Button>
 
               <Button
                 type="submit"
-                className="w-full sm:w-auto px-6 py-2 bg-green-700 hover:bg-green-600 text-white rounded-md transition duration-200"
+                className="w-full cursor-pointer sm:w-auto px-6 py-2 bg-green-700 hover:bg-green-600 text-white rounded-md transition duration-200"
               >
                 {isLoading ? (
                   <LoaderIcon className="animate-spin" />
@@ -93,7 +94,7 @@ const CreateLecture = () => {
           </form>
         </div>
       </div>
-      <div className=" text-white p-2 mr-1 ">
+      <div className=" text-white p-2 mr-1 ml-1">
         {lectureLoading ? (
           <div className=" items-center justify-center">
             <LoaderIcon className="animate-spin" />

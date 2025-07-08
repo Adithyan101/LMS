@@ -179,3 +179,21 @@ export const getAllLectures = async (req, res) => {
     res.status(500).json({ message: "get all lectures server error" });
   }
 };
+
+
+export const editLecture = async(req,res)=>{
+  try {
+    const { lectureTitle, isPreviewFree } = req.body;
+    const lectureId = req.params.id;
+    if (!lectureTitle || !lectureId || !isPreviewFree)  {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+    
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "edit lecture server error" });
+  }
+}
+
+
+//9.50
